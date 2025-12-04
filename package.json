@@ -1,0 +1,30 @@
+{
+  "name": "non-resource-page",
+  "version": "1.0.0",
+  "description": "Resource Page Standalone",
+  "scripts": {
+    "start": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "clean": "rm -rf dist .vite"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NectherLouieDev/non-resource-page.git"
+  },
+  "keywords": [
+    "resource",
+    "standalone",
+    "page"
+  ],
+  "author": "Necther Louie Souribio",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/NectherLouieDev/non-resource-page/issues"
+  },
+  "homepage": "https://github.com/NectherLouieDev/non-resource-page#readme",
+  "devDependencies": {
+    "vite": "^7.2.6"
+  }
+}
