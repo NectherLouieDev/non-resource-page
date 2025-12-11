@@ -47,8 +47,8 @@ function addStyles() {
         /* ========== HEADER & TITLE SECTION ========== */
         .taxonomy-filter__header {
             background-color: #1D1518;
-            padding: 4rem 1rem;
-            margin-bottom: 2rem;
+            padding: 0.5rem 1rem;
+            margin-bottom: 1rem;
             border-bottom: 1px solid #333;
         }
 
@@ -234,7 +234,7 @@ function addStyles() {
         .taxonomy-filter__results {
             background-color: #1D1518;
             min-height: 500px;
-            padding: 2rem 0;
+            padding: 0.5rem 0;
         }
 
         .results-content {
@@ -514,7 +514,54 @@ function addStyles() {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
             gap: 2rem;
-            margin-top: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        @media (max-width: 768px) {
+            .posts-grid {
+                grid-template-columns: 1fr !important;
+            }
+        }
+
+        .post-card {
+            background: #1D1518;
+            border: 1px solid #333;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .post-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 3rem;
+        }
+
+        .pagination button {
+            padding: 0.5rem 1rem;
+            background: transparent;
+            color: #FEFFB7;
+            border: 1px solid #FEFFB7;
+            cursor: pointer;
+            font-family: 'Roboto Condensed', 'Open Sans', sans-serif;
+            transition: all 0.2s ease;
+        }
+
+        .pagination button:hover:not(:disabled) {
+            background: rgba(254, 255, 183, 0.1);
+        }
+
+        .pagination button.active {
+            background: #48bb78;
+            color: white;
+            border: 1px solid #48bb78;
+            cursor: default;
         }
 
         /* ========== CLEAR ALL BUTTON ========== */
@@ -584,8 +631,6 @@ function showFilterLoadingState() {
                 animation: spin 1s linear infinite; 
                 margin: 0 auto 1.5rem;
             "></div>
-            <h3 style="margin-bottom: 1rem;">Loading filter options...</h3>
-            <p>Fetching taxonomy data from WordPress.</p>
         </div>
     `;
 
@@ -609,7 +654,6 @@ function showFilterErrorState(error) {
             padding: 3rem; 
             color: #f56565;
             border: 2px solid rgba(245, 101, 101, 0.2);
-            border-radius: 8px;
             background: rgba(245, 101, 101, 0.05);
         ">
             <div style="
@@ -635,7 +679,6 @@ function showFilterErrorState(error) {
                 background: #63b3ed; 
                 color: white; 
                 border: none; 
-                border-radius: 6px; 
                 cursor: pointer; 
                 font-weight: 600;
             ">

@@ -36,22 +36,22 @@ async function createTaxonomyFilter() {
   const col = document.createElement("div");
   col.className = "col-12 col-sm-12 col-xl-10";
 
-  // Create title
-  const h1 = document.createElement("h1");
-  h1.className =
-    "text-center text-white section__heading section__heading--white";
-  h1.textContent = "Taxonomy Filter System";
-  col.appendChild(h1);
+  // --- Create title
+  // const h1 = document.createElement("h1");
+  // h1.className =
+  //   "text-center text-white section__heading section__heading--white";
+  // h1.textContent = "Taxonomy Filter System";
+  // col.appendChild(h1);
 
-  // Create subtitle
-  const subtitle = document.createElement("p");
-  subtitle.className = "text-center text-white";
-  subtitle.style.opacity = "0.8";
-  subtitle.style.marginBottom = "2rem";
-  subtitle.style.fontSize = "1.1rem";
-  subtitle.textContent =
-    "Filter posts by selecting from the four main taxonomy categories";
-  col.appendChild(subtitle);
+  // --- Create subtitle
+  // const subtitle = document.createElement("p");
+  // subtitle.className = "text-center text-white";
+  // subtitle.style.opacity = "0.8";
+  // subtitle.style.marginBottom = "2rem";
+  // subtitle.style.fontSize = "1.1rem";
+  // subtitle.textContent =
+  //   "Filter posts by selecting from the four main taxonomy categories";
+  // col.appendChild(subtitle);
 
   // Create filter block
   const filterBlock = document.createElement("div");
@@ -68,25 +68,29 @@ async function createTaxonomyFilter() {
 
   // Create filter items for each taxonomy
   const taxonomies = [
-    { 
-        id: "non_topic", 
-        label: "TOPIC", 
-        options: taxonomiesData.non_topic 
+    {
+      id: "non_topic",
+      label: "TOPIC",
+      labelPascalCase: "Topic",
+      options: taxonomiesData.non_topic,
     },
     {
       id: "non_scripture",
       label: "SCRIPTURE",
+      labelPascalCase: "Scripture",
       options: taxonomiesData.non_scripture,
     },
     {
       id: "non_series",
       label: "SERIES",
+      labelPascalCase: "Series",
       options: taxonomiesData.non_series,
     },
-    { 
-        id: "non_theme", 
-        label: "THEME", 
-        options: taxonomiesData.non_theme 
+    {
+      id: "non_theme",
+      label: "THEME",
+      labelPascalCase: "Theme",
+      options: taxonomiesData.non_theme,
     },
   ];
 
@@ -108,21 +112,20 @@ async function createTaxonomyFilter() {
     taxonomySelect.id = `select-${taxonomy.id}`;
     taxonomySelect.dataset.taxonomy = taxonomy.id;
 
-    // Create default option
-    const defaultOption = document.createElement("option");
-    defaultOption.value = "";
-    defaultOption.selected = true;
-    defaultOption.disabled = true;
-    defaultOption.textContent = `Choose ${taxonomy.id}`;
-    taxonomySelect.appendChild(defaultOption);
-
-    // Add "All" option
+    // "All" option as default
     const allOption = document.createElement("option");
     allOption.value = "all";
-    allOption.textContent = `All ${
-      taxonomy.id.charAt(0).toUpperCase() + taxonomy.id.slice(1)
-    }`;
+    allOption.textContent = `All ${taxonomy.labelPascalCase}`;
+    allOption.selected = true;
     taxonomySelect.appendChild(allOption);
+
+    // Create choose option
+    const chooseOption = document.createElement("option");
+    chooseOption.value = "";
+    chooseOption.disabled = true;
+    chooseOption.textContent = `Choose ${taxonomy.labelPascalCase}`;
+    taxonomySelect.appendChild(chooseOption);
+
 
     // Add taxonomy options
     Object.entries(taxonomy.options).forEach(([value, label]) => {
@@ -194,20 +197,6 @@ async function createTaxonomyFilter() {
   const resultsContent = document.createElement("div");
   resultsContent.id = "results-content";
   resultsContent.className = "results-content";
-  resultsContent.innerHTML = `
-        <div class="text-center" style="padding: 4rem;">
-            <div style="width: 80px; height: 80px; background: rgba(254, 255, 183, 0.1); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 1.5rem; border: 1px solid rgba(254, 255, 183, 0.2);">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#FEFFB7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                </svg>
-            </div>
-            <h3 style="color: #FEFFB7; margin-bottom: 1rem; font-size: 1.5rem; font-family: 'Aileron', 'Roboto Condensed', sans-serif; font-weight: bold;">Select taxonomy filters to find posts</h3>
-            <p style="color: #FEFFB7; opacity: 0.9; max-width: 600px; margin: 0 auto; font-family: 'Open Sans', sans-serif;">
-                Choose from any of the four taxonomy categories to filter WordPress posts. 
-                You can select one or multiple filters to narrow down your search.
-            </p>
-        </div>
-    `;
 
   resultsContainer.appendChild(resultsContent);
   resultsSection.appendChild(resultsContainer);
@@ -245,39 +234,42 @@ async function createTaxonomyFilter() {
       );
     });
 
+    // Reset pagination to page 1
+    window.currentPage = 1;
+    window.currentFilters = {};
+    window.allPosts = []; // Clear all posts
+
     // Update search button
     updateSearchButtonState();
 
-    // Reset results
-    resetResults();
+    // Reset results - fetch all posts for page 1
+    showLoading();
+    fetchWordPressPosts({}, true); // Pass true for initial load
   }
 
   function handleSearch() {
+
+    // Reset to page 1 when performing a new search
+    window.currentPage = 1;
+    window.allPosts = []; // Clear all posts
+    
     // Get all selected values
     const selectedFilters = {};
-    let hasSelection = false;
 
     Object.entries(selectElements).forEach(([taxonomy, select]) => {
       if (select.value && select.value !== "all") {
         selectedFilters[taxonomy] = select.value;
-        hasSelection = true;
       }
     });
 
-    if (!hasSelection) {
-      // Show message to select at least one filter
-      showMessage(
-        "Please select at least one filter before searching.",
-        "info"
-      );
-      return;
-    }
+    // Store filters globally
+    window.currentFilters = selectedFilters;
 
     // Show loading state
     showLoading();
 
     // Fetch WordPress posts based on selected filters
-    fetchWordPressPosts(selectedFilters);
+    fetchWordPressPosts(selectedFilters, true);
   }
 
   function updateSearchButtonState() {
@@ -373,42 +365,31 @@ async function createTaxonomyFilter() {
   }
 
   function resetResults() {
-    const resultsContent = document.getElementById("results-content");
-    resultsContent.innerHTML = `
-        <div class="text-center" style="padding: 4rem;">
-            <div style="width: 80px; height: 80px; background: rgba(254, 255, 183, 0.1); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 1.5rem; border: 1px solid rgba(254, 255, 183, 0.2);">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#FEFFB7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                </svg>
-            </div>
-            <h3 style="color: #FEFFB7; margin-bottom: 1rem; font-size: 1.5rem; font-family: 'Aileron', 'Roboto Condensed', sans-serif; font-weight: bold;">Select taxonomy filters to find posts</h3>
-            <p style="color: #FEFFB7; opacity: 0.9; max-width: 600px; margin: 0 auto; font-family: 'Open Sans', sans-serif;">
-                Choose from any of the four taxonomy categories to filter WordPress posts. 
-                You can select one or multiple filters to narrow down your search.
-            </p>
-        </div>
-    `;
-    // Remove filter preview if exists
-    const preview = document.getElementById("filter-preview");
-    if (preview) {
-      preview.remove();
-    }
+    loadInitialPosts();
   }
 
   function showLoading() {
-    const resultsContent = document.getElementById("results-content");
-    resultsContent.innerHTML = `
-        <div style="max-width: 1200px; margin: 0 auto; padding: 3rem 2rem;">
-            <div style="text-align: center; padding: 4rem;">
-                <div style="display: inline-block; width: 60px; height: 60px; border: 4px solid rgba(254, 255, 183, 0.1); border-top: 4px solid #FEFFB7; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 1.5rem;"></div>
-                <h3 style="color: #FEFFB7; margin-bottom: 1rem; font-size: 1.5rem; font-family: 'Aileron', 'Roboto Condensed', sans-serif; font-weight: bold;">Searching WordPress posts...</h3>
-                <p style="color: #FEFFB7; opacity: 0.9; max-width: 600px; margin: 0 auto; font-family: 'Open Sans', sans-serif;">
-                    Fetching posts based on your selected filters. This may take a moment.
-                </p>
-            </div>
-        </div>
-    `;
-  }
+  const resultsContent = document.getElementById("results-content");
+  if (!resultsContent) return;
+  
+  const currentPageNum = window.currentPage || 1;
+  
+  resultsContent.innerHTML = `
+    <div style="max-width: 1200px; margin: 0 auto; padding: 3rem 2rem;">
+      <div style="text-align: center; padding: 4rem;">
+        <div style="display: inline-block; width: 60px; height: 60px; border: 4px solid rgba(254, 255, 183, 0.1); border-top: 4px solid #FEFFB7; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 1.5rem;"></div>
+        <h3 style="color: #FEFFB7; margin-bottom: 1rem; font-size: 1.5rem; font-family: 'Aileron', 'Roboto Condensed', sans-serif; font-weight: bold;">
+          ${currentPageNum > 1 ? `Loading more posts...` : 'Searching WordPress posts...'}
+        </h3>
+        <p style="color: #FEFFB7; opacity: 0.9; max-width: 600px; margin: 0 auto; font-family: 'Open Sans', sans-serif;">
+          ${currentPageNum > 1 ? 'Fetching more posts...' : 'Fetching posts based on your selected filters. This may take a moment.'}
+        </p>
+      </div>
+    </div>
+  `;
+};
+
+  window.showLoading = showLoading;
 
   function showMessage(message, type = "info") {
     const colors = {
@@ -475,11 +456,24 @@ async function createTaxonomyFilter() {
   // Initialize search button state
   updateSearchButtonState();
 
+  // Load all posts on initial page load
+  async function loadInitialPosts() {
+    showLoading();
+    
+    // Fetch all posts (no filters)
+    const allPosts = await fetchWordPressPosts({}, true);
+  }
+
+  // Call loadInitialPosts after component is ready
+  setTimeout(() => {
+    loadInitialPosts();
+  }, 100);
+
   return div;
 }
 
 // Display WordPress posts in a grid
-function displayWordPressPosts(posts, filters) {
+function displayWordPressPosts(posts, filters = {}, totalPages = 1, currentPage = 1) {
   const resultsContent = document.getElementById("results-content");
 
   if (!posts || posts.length === 0) {
@@ -496,7 +490,7 @@ function displayWordPressPosts(posts, filters) {
                     </div>
                     <h3 style="color: #FEFFB7; margin-bottom: 1rem; font-size: 1.5rem; font-family: 'Aileron', 'Roboto Condensed', sans-serif; font-weight: bold;">No posts found</h3>
                     <p style="color: #FEFFB7; opacity: 0.9; max-width: 600px; margin: 0 auto 1.5rem; font-family: 'Open Sans', sans-serif;">
-                        No WordPress posts match your selected filters. Try adjusting your selections or check back later.
+                        No posts match your selected filters. Try adjusting your selections or check back later.
                     </p>
                     <button onclick="window.resetFilters && window.resetFilters()" 
                             style="padding: 0.75rem 1.5rem; background: transparent; color: #FEFFB7; border: 1px solid #FEFFB7; cursor: pointer; font-weight: 600; font-family: 'Roboto Condensed', 'Open Sans', sans-serif; text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.2s ease;">
@@ -509,7 +503,7 @@ function displayWordPressPosts(posts, filters) {
     return;
   }
 
-  // Create posts grid HTML
+  // Create posts grid HTML with 2 columns
   const postsGrid = posts
     .map((post) => {
       const featuredImage =
@@ -522,19 +516,32 @@ function displayWordPressPosts(posts, filters) {
         day: "numeric",
       });
 
-      const excerpt = post.excerpt
-        ? post.excerpt.substring(0, 150) + "..."
-        : "";
+      // Clean and truncate excerpt
+      let excerpt = '';
+      if (post.excerpt) {
+        // Remove HTML tags and trim
+        excerpt = post.excerpt.replace(/<[^>]*>/g, '').trim();
+        // Limit to 200 characters
+        if (excerpt.length > 200) {
+          excerpt = excerpt.substring(0, 200) + '...';
+        }
+      } else if (post.content) {
+        // Fallback to content if no excerpt
+        excerpt = post.content.replace(/<[^>]*>/g, '').trim();
+        if (excerpt.length > 200) {
+          excerpt = excerpt.substring(0, 200) + '...';
+        }
+      }
 
       return `
-                <article class="post-card">
-                    <div style="height: 200px; overflow: hidden;">
+                <article class="post-card" style="height: 100%; display: flex; flex-direction: column;">
+                    <div style="height: 220px; overflow: hidden;">
                         <img src="${featuredImage}" 
                             alt="${post.title}" 
                             style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease;">
                     </div>
-                    <div style="padding: 1.5rem;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                    <div style="padding: 1.75rem; flex-grow: 1; display: flex; flex-direction: column;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                             <span style="font-size: 0.875rem; color: #FEFFB7; opacity: 0.8; font-family: 'Roboto Condensed', 'Open Sans', sans-serif;">
                                 ${postDate}
                             </span>
@@ -543,7 +550,7 @@ function displayWordPressPosts(posts, filters) {
                             </span>
                         </div>
                         
-                        <h3 style="color: #FEFFB7; font-size: 1.125rem; font-weight: 600; margin-bottom: 0.75rem; line-height: 1.4; font-family: 'Aileron', 'Roboto Condensed', sans-serif;">
+                        <h3 style="color: #FEFFB7; font-size: 1.25rem; font-weight: 600; margin-bottom: 1rem; line-height: 1.4; font-family: 'Aileron', 'Roboto Condensed', sans-serif;">
                             <a href="${post.link}" 
                             style="color: #FEFFB7; text-decoration: none; transition: color 0.2s ease;"
                             onmouseover="this.style.color='#FEFFB7'; this.style.opacity='0.9'"
@@ -552,17 +559,19 @@ function displayWordPressPosts(posts, filters) {
                             </a>
                         </h3>
                         
-                        <p style="color: #FEFFB7; opacity: 0.9; font-size: 0.9375rem; line-height: 1.6; margin-bottom: 1rem; font-family: 'Open Sans', sans-serif;">
-                            ${excerpt}
-                        </p>
+                        <div style="flex-grow: 1; margin-bottom: 1.5rem;">
+                            <p style="color: #FEFFB7; opacity: 0.9; font-size: 1rem; line-height: 1.6; margin: 0; font-family: 'Open Sans', sans-serif;">
+                                ${excerpt}
+                            </p>
+                        </div>
                         
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: auto;">
+                        <div style="margin-top: auto;">
                             <a href="${post.link}" 
-                            style="color: #FEFFB7; font-weight: 600; text-decoration: none; font-size: 0.875rem; display: inline-flex; align-items: center; gap: 0.25rem; font-family: 'Roboto Condensed', 'Open Sans', sans-serif; transition: opacity 0.2s ease;"
-                            onmouseover="this.style.opacity='0.8'"
-                            onmouseout="this.style.opacity='1'">
-                                Read More 
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            style="color: #FEFFB7; font-weight: 600; text-decoration: none; font-size: 0.9375rem; display: inline-flex; align-items: center; gap: 0.5rem; font-family: 'Roboto Condensed', 'Open Sans', sans-serif; transition: opacity 0.2s ease; padding: 0.5rem 0; border-bottom: 2px solid rgba(254, 255, 183, 0.3);"
+                            onmouseover="this.style.opacity='0.8'; this.style.borderBottomColor='#FEFFB7'"
+                            onmouseout="this.style.opacity='1'; this.style.borderBottomColor='rgba(254, 255, 183, 0.3)'">
+                                Read More
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M5 12h14M12 5l7 7-7 7"></path>
                                 </svg>
                             </a>
@@ -584,56 +593,81 @@ function displayWordPressPosts(posts, filters) {
     .join("");
 
   // Update results
-  resultsContent.innerHTML = `
+  const hasMore = currentPage < totalPages;
+  const paginationHTML = hasMore ? createPagination(totalPages) : ``;
+
+  const innerHTML = `
         <div style="max-width: 1200px; margin: 0 auto; padding: 2rem;">
             <!-- Results Header -->
             <div style="background: #1D1518; border: 1px solid #333; padding: 2rem; margin-bottom: 2rem;">
                 <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
                     <div>
-                        <h2 style="color: #FEFFB7; margin-bottom: 0.5rem; font-size: 1.5rem; font-family: 'Aileron', 'Roboto Condensed', sans-serif; font-weight: bold;">Filter Results</h2>
+                        <h2 style="color: #FEFFB7; margin-bottom: 0.5rem; font-size: 1.5rem; font-family: 'Aileron', 'Roboto Condensed', sans-serif; font-weight: bold;">
+                            ${Object.keys(filters).length > 0 ? 'Filter Results' : 'All Posts'}
+                        </h2>
                         <p style="color: #FEFFB7; opacity: 0.9; margin-bottom: 1rem; font-family: 'Open Sans', sans-serif;">
-                            Found ${posts.length} post${
-    posts.length !== 1 ? "s" : ""
-  } matching your criteria
+                            Found ${posts.length} post${posts.length !== 1 ? "s" : ""} 
+                            ${Object.keys(filters).length > 0 ? 'matching your criteria' : ''}
+                            ${totalPages > 1 ? ` (Page ${currentPage} of ${totalPages})` : ''}
                         </p>
+                        ${Object.keys(filters).length > 0 ? `
                         <div style="margin-top: 0.5rem;">
                             ${filterSummary}
                         </div>
+                        ` : ''}
                     </div>
+                    ${Object.keys(filters).length > 0 ? `
                     <button onclick="window.resetFilters && window.resetFilters()" 
                             style="padding: 0.75rem 1.5rem; background: transparent; color: #FEFFB7; border: 1px solid #FEFFB7; cursor: pointer; font-weight: 600; font-family: 'Roboto Condensed', 'Open Sans', sans-serif; text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.2s ease;"
                             onmouseover="this.style.background='rgba(254, 255, 183, 0.1)'"
                             onmouseout="this.style.background='transparent'">
                         Clear Filters
                     </button>
+                    ` : ''}
                 </div>
             </div>
             
-            <!-- Posts Grid -->
-            <div class="posts-grid">
+            <!-- Posts Grid - 2 columns -->
+            <div class="posts-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 2.5rem; margin-bottom: 3rem;">
                 ${postsGrid}
             </div>
             
-            <!-- Load More Button (if needed) -->
-            ${
-              posts.length >= 12
-                ? `
-                    <div style="text-align: center; margin-top: 3rem;">
-                        <button onclick="window.loadMorePosts && window.loadMorePosts()" 
-                                style="padding: 0.875rem 2rem; background: transparent; color: #FEFFB7; border: 1px solid #FEFFB7; cursor: pointer; font-weight: 600; font-size: 1rem; font-family: 'Roboto Condensed', 'Open Sans', sans-serif; text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.2s ease;"
-                                onmouseover="this.style.background='rgba(254, 255, 183, 0.1)'"
-                                onmouseout="this.style.background='transparent'">
-                            Load More Posts
-                        </button>
-                    </div>
-                `
-                : ""
-            }
+            <!-- Pagination / Load More -->
+            ${paginationHTML}
         </div>
     `;
 
+  resultsContent.innerHTML = innerHTML;
+
   // Add hover effects
   addPostHoverEffects();
+}
+
+// Create pagination HTML
+function createPagination(totalPages) {
+  const currentPage = window.currentPage || 1;
+  console.log('Creating Load More button. Current page:', currentPage, 'Total pages:', totalPages);
+  
+  // If we're on the last page or only one page, don't show anything
+  if (currentPage >= totalPages || totalPages <= 1) {
+    return ``;
+  }
+  
+  const loadMoreHTML = `
+    <div style="text-align: center; margin-top: 3rem;">
+      <button onclick="window.loadMorePosts()" 
+              class="load-more-button"
+              style="padding: 0.875rem 2rem; background: transparent; color: #FEFFB7; border: 1px solid #FEFFB7; cursor: pointer; font-weight: 600; font-size: 1rem; font-family: 'Roboto Condensed', 'Open Sans', sans-serif; text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.2s ease;"
+              onmouseover="this.style.background='rgba(254, 255, 183, 0.1)'"
+              onmouseout="this.style.background='transparent'">
+        Load More Posts
+        ${totalPages > 1 ? `<br><span style="font-size: 0.875rem; opacity: 0.8; font-weight: normal;">(Showing ${currentPage} of ${totalPages})</span>` : ''}
+      </button>
+    </div>
+  `;
+  
+  console.log('Generated Load More HTML');
+  return loadMoreHTML;
 }
 
 // Fallback content
@@ -680,14 +714,44 @@ function showFallbackContent(filters, error) {
 
 // Global helper functions
 window.resetFilters = function () {
+  window.currentPage = 1;
+  window.currentFilters = {};
+  window.allPosts = [];
+
   const resetButton = document.getElementById("reset-button");
   if (resetButton) {
     resetButton.click();
   }
 };
 
-window.loadMorePosts = function () {
-  alert("Load more functionality would be implemented here");
+window.loadMorePosts = function() {
+  console.log('Loading more posts...');
+  
+  // Update current page
+  window.currentPage = (window.currentPage || 1) + 1;
+  
+  // Show loading state on the button
+  const loadMoreBtn = document.querySelector('.load-more-button');
+  if (loadMoreBtn) {
+    loadMoreBtn.innerHTML = `
+      <span>Loading...</span>
+      <div style="display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(254, 255, 183, 0.5); border-top: 2px solid #FEFFB7; border-radius: 50%; margin-left: 8px; animation: spin 1s linear infinite;"></div>
+    `;
+    loadMoreBtn.disabled = true;
+    loadMoreBtn.style.opacity = '0.7';
+    loadMoreBtn.style.cursor = 'wait';
+  }
+  
+  // Re-fetch posts with the new page
+  const filters = window.currentFilters || {};
+  fetchWordPressPosts(filters);
 };
+
+// Add this to handle initial page load
+window.loadInitialPosts = function() {
+  // This will trigger loading all posts
+  resetResults();
+};
+
 
 export { createTaxonomyFilter, displayWordPressPosts, showFallbackContent };
